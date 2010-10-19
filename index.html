@@ -90,7 +90,7 @@
                 var wktField = $('#wkt');
 
                 var feature = wktFormat.read(jQuery.trim(wktField.val()));
-                if ($('#swapCoordinates').val()) {
+                if ($('#swapCoordinates').is(':checked')) {
                     swapFeatureCoordinates(feature);
                 }
 
