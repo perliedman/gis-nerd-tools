@@ -11,6 +11,40 @@
         <script src="http://openlayers.org/api/OpenLayers.js"></script>
         <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
         <script><!--
+            OpenLayers.Control.Click = OpenLayers.Class(OpenLayers.Control, 
+            {                
+                defaultHandlerOptions: {
+                    'single': true,
+                    'double': false,
+                    'pixelTolerance': 0,
+                    'stopSingle': false,
+                    'stopDouble': false
+                },
+ 
+                initialize: function(options) {
+                    this.handlerOptions = OpenLayers.Util.extend(
+                        {}, this.defaultHandlerOptions
+                    );
+                    OpenLayers.Control.prototype.initialize.apply(
+                        this, arguments
+                    ); 
+                    this.handler = new OpenLayers.Handler.Click(
+                        this, {
+                            'click': this.trigger
+                        }, this.handlerOptions
+                    );
+                }, 
+ 
+                trigger: function(e) {
+                    var lonlat = map.getLonLatFromViewPortPx(e.xy);
+                    this.locationClicked(lonlat);
+                },
+                
+                locationClicked: function(lonlat) {
+                    // Do nothing
+                }
+            });
+
             var map;
             var vectorLayer;
             var wktFormat = new OpenLayers.Format.WKT();
@@ -30,6 +64,19 @@
                     updatedFeature();
                     return false;
                 });
+
+                var mapClick = new OpenLayers.Control.Click();
+                mapClick.locationClicked = function(lonlat) {
+                    getCurrentCoordinateSystem(function(cs) {
+                        var p = lonlat.transform(mapCoordinateSystem, cs);
+                        var rx = parseInt(p.lon * 10000) / 10000;
+                        var ry = parseInt(p.lat * 10000) / 10000;
+                        $('#coordinate').html('X = ' + rx + ', Y = ' + ry);
+                    });
+                };
+
+                map.addControl(mapClick);
+                mapClick.activate();
             });
 
             function updatedFeature() {
@@ -94,6 +141,8 @@
                     <button id="updateFeature">Update</button>
                 </p>
             </form>
+        </div>
+        <div id="coordinate">
         </div>
     </body>
 </html>

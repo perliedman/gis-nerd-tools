@@ -19,10 +19,18 @@ body {
     right: 16px;
     top: 16px;
     width: 320px;
-    height: 240px;
+    height: 268px;
     border: 1px solid #888;
     background-color: white;
     opacity: 0.8;
+    z-index: 1000;
+}
+
+#coordinate {
+    padding: 10px;
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
     z-index: 1000;
 }
 
