@@ -90,6 +90,10 @@
                 var wktField = $('#wkt');
 
                 var feature = wktFormat.read(jQuery.trim(wktField.val()));
+                if ($('#swapCoordinates').val()) {
+                    swapFeatureCoordinates(feature);
+                }
+
                 /*feature.style = {
                     'strokeColor': '#a00000',
                     'strokeWidth': 4,
@@ -141,6 +145,22 @@
                     callback();
                 }
             }
+
+            function swapFeatureCoordinates(feature) {
+                swapGeometryCoordinates(feature.geometry);
+            }
+
+            function swapGeometryCoordinates(geometry) {
+                if (geometry.components) {
+                    for (var i = 0; i < geometry.components.length; i++) {
+                        swapGeometryCoordinates(geometry.components[i]);
+                    }
+                } else {
+                    var temp = geometry.x;
+                    geometry.x = geometry.y;
+                    geometry.y = temp;
+                }
+            }
         --></script>
     </head>
 
@@ -156,7 +176,8 @@
                 <div id="coordinateSystemDef"></div>
                 <p>
                     WKT:<br/>
-                    <textarea id="wkt" cols="36" rows="8"></textarea>
+                    <textarea id="wkt" cols="36" rows="8"></textarea><br/>
+                    <input id="swapCoordinates" type="checkbox" name="Swap coordinates"/> Swap coordinates<br/>
                     <button id="updateFeature">Update</button>
                     <div id="wait">
                         <img src="throbber.gif" alt="Wait..."/>
