@@ -61,7 +61,12 @@
                 map.zoomToMaxExtent();
 
                 $('#updateFeature').click(function() {
-                    updatedFeature();
+                    try {
+                        updatedFeature();
+                    } catch (e) {
+                        // Do something nice.
+                    }
+
                     return false;
                 });
 
@@ -111,8 +116,8 @@
             function getCurrentCoordinateSystem(callback) {
                 var coordinateSystemField = $('#coordinateSystemName');
                 var csName = jQuery.trim(coordinateSystemField.val());
+                var p4cs = new Proj4js.Proj(csName);
                 if (mapCoordinateSystem[csName] == null) {
-                    var p4cs = new Proj4js.Proj(csName);
                     $('#wait').show();
                     waitForCoordinateSystem(p4cs, function() {
                         $('#wait').hide();
