@@ -85,6 +85,13 @@
                 var wktField = $('#wkt');
 
                 var feature = wktFormat.read(jQuery.trim(wktField.val()));
+                /*feature.style = {
+                    'strokeColor': '#a00000',
+                    'strokeWidth': 4,
+                    'fillColor': '#a04040',
+                    'strokeOpacity': 0.8,
+                    'fillOpacity': 0.5
+                };*/
                 if (feature != null) {
                     wktField.removeClass('error');
 
@@ -111,9 +118,11 @@
                         $('#wait').hide();
                         mapCoordinateSystem[csName] = 
                             new OpenLayers.Projection(csName);
+                        $('#coordinateSystemDef').html(p4cs.defData);
                         callback(mapCoordinateSystem[csName]);
                     });
                 } else {
+                    $('#coordinateSystemDef').html(p4cs.defData);
                     callback(mapCoordinateSystem[csName]);
                 }
             }
@@ -139,6 +148,7 @@
                     Coordinate system:<br/>
                     <input id="coordinateSystemName" type="text" value="EPSG:4326"/>
                 </p>
+                <div id="coordinateSystemDef"></div>
                 <p>
                     WKT:<br/>
                     <textarea id="wkt" cols="36" rows="8"></textarea>
