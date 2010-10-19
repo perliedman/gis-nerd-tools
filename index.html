@@ -69,6 +69,35 @@
 
                     return false;
                 });
+                $('#coordinateSystemName').change(function() {
+                    var csName = jQuery.trim($('#coordinateSystemName').val());
+                    var csDef = '';
+                    if (coordSystems[csName]) {
+                        var cs = new Proj4js.Proj(csName);
+                        csDef = cs.defData;
+                    }
+
+                    $('#coordinateSystemDef').val(csDef);
+                });
+                $('#coordinateSystemDef').change(function() {
+                    var csName = jQuery.trim($('#coordinateSystemName').val());
+                    var csDef = jQuery.trim($('#coordinateSystemDef').val());                    if (coordSystems[csName]) {
+                        var cs = new Proj4js.Proj(csName);
+
+                        if (csDef != '' && cs.defData != csDef) {
+                            Proj4js.defs[csName] = csDef;
+                            coordSystems[csName] = null;
+                            getCurrentCoordinateSystem(function() {
+                                // Do nothing
+                            });
+                        }
+                    } else {
+                        Proj4js.defs[csName] = csDef;
+                        getCurrentCoordinateSystem(function() {
+                            // Do nothing
+                        });
+                    }
+                });
 
                 var mapClick = new OpenLayers.Control.Click();
                 mapClick.locationClicked = function(lonlat) {
@@ -121,18 +150,18 @@
                 var coordinateSystemField = $('#coordinateSystemName');
                 var csName = jQuery.trim(coordinateSystemField.val());
                 var p4cs = new Proj4js.Proj(csName);
-                if (mapCoordinateSystem[csName] == null) {
+                if (coordSystems[csName] == null) {
                     $('#wait').show();
                     waitForCoordinateSystem(p4cs, function() {
                         $('#wait').hide();
-                        mapCoordinateSystem[csName] = 
+                        coordSystems[csName] = 
                             new OpenLayers.Projection(csName);
-                        $('#coordinateSystemDef').html(p4cs.defData);
-                        callback(mapCoordinateSystem[csName]);
+                        $('#coordinateSystemDef').val(p4cs.defData);
+                        callback(coordSystems[csName]);
                     });
                 } else {
-                    $('#coordinateSystemDef').html(p4cs.defData);
-                    callback(mapCoordinateSystem[csName]);
+                    $('#coordinateSystemDef').val(p4cs.defData);
+                    callback(coordSystems[csName]);
                 }
             }
 
@@ -173,7 +202,10 @@
                     Coordinate system:<br/>
                     <input id="coordinateSystemName" type="text" value="EPSG:4326"/>
                 </p>
-                <div id="coordinateSystemDef"></div>
+                <p>
+                    Coordinate system definition:<br/>
+                    <input id="coordinateSystemDef" type="text"/>
+                </p>
                 <p>
                     WKT:<br/>
                     <textarea id="wkt" cols="36" rows="8"></textarea><br/>
