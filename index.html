@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>GIS Nerd Tools</title>
+        <!--[if lt IE 9]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link rel="stylesheet" href="style.css"/>
+        <script src="http://proj4js.org/lib/proj4js.js"></script>
+        <script src="http://openlayers.org/api/OpenLayers.js"></script>
+        <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.3/jquery.min.js"></script>
+        <script><!--
+            var map;
+            var vectorLayer;
+            var wktFormat = new OpenLayers.Format.WKT();
+            var coordSystems = {};
+            var mapCoordinateSystem = 
+                new OpenLayers.Projection('EPSG:900913');
+
+            $(document).ready(function() {
+                map = new OpenLayers.Map("map");
+                var mapnik = new OpenLayers.Layer.OSM();
+                vectorLayer = new OpenLayers.Layer.Vector();
+
+                map.addLayers([mapnik, vectorLayer]);
+                map.zoomToMaxExtent();
+
+                $('#updateFeature').click(function() {
+                    updatedFeature();
+                    return false;
+                });
+            });
+
+            function updatedFeature() {
+                var wktField = $('#wkt');
+
+                var feature = wktFormat.read(jQuery.trim(wktField.val()));
+                if (feature != null) {
+                    wktField.removeClass('error');
+
+                    getCurrentCoordinateSystem(function(coordinateSystem) {
+                        feature.geometry.transform(coordinateSystem,
+                            mapCoordinateSystem);
+
+                        vectorLayer.removeAllFeatures();
+                        vectorLayer.addFeatures([feature]);
+                        map.zoomToExtent(vectorLayer.getDataExtent());
+                    });
+                } else if (!wktField.hasClass('error')) {
+                    wktField.addClass('error');
+                }
+            };
+
+            function getCurrentCoordinateSystem(callback) {
+                var coordinateSystemField = $('#coordinateSystemName');
+                var csName = jQuery.trim(coordinateSystemField.val());
+                if (mapCoordinateSystem[csName] == null) {
+                    var p4cs = new Proj4js.Proj(csName);
+                    waitForCoordinateSystem(p4cs, function() {
+                        mapCoordinateSystem[csName] = 
+                            new OpenLayers.Projection(csName);
+                        callback(mapCoordinateSystem[csName]);
+                    });
+                } else {
+                    callback(mapCoordinateSystem[csName]);
+                }
+            }
+
+            function waitForCoordinateSystem(cs, callback) {
+                if (!cs.readyToUse) {
+                    setTimeout(function() {
+                        waitForCoordinateSystem(cs, callback);
+                    }, 100);
+                } else {
+                    callback();
+                }
+            }
+        --></script>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <div id="controlWindow">
+            <h1>GIS Nerd Tools</h1>
+            <form>
+                <p>
+                    Coordinate system:<br/>
+                    <input id="coordinateSystemName" type="text" value="EPSG:4326"/>
+                </p>
+                <p>
+                    WKT:<br/>
+                    <textarea id="wkt" cols="36" rows="8"></textarea>
+                    <button id="updateFeature">Update</button>
+                </p>
+            </form>
+        </div>
+    </body>
+</html>
+
