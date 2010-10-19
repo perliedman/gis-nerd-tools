@@ -77,6 +77,8 @@
 
                 map.addControl(mapClick);
                 mapClick.activate();
+
+                $('#wait').hide();
             });
 
             function updatedFeature() {
@@ -104,7 +106,9 @@
                 var csName = jQuery.trim(coordinateSystemField.val());
                 if (mapCoordinateSystem[csName] == null) {
                     var p4cs = new Proj4js.Proj(csName);
+                    $('#wait').show();
                     waitForCoordinateSystem(p4cs, function() {
+                        $('#wait').hide();
                         mapCoordinateSystem[csName] = 
                             new OpenLayers.Projection(csName);
                         callback(mapCoordinateSystem[csName]);
@@ -139,6 +143,9 @@
                     WKT:<br/>
                     <textarea id="wkt" cols="36" rows="8"></textarea>
                     <button id="updateFeature">Update</button>
+                    <div id="wait">
+                        <img src="throbber.gif" alt="Wait..."/>
+                    </div>
                 </p>
             </form>
         </div>
