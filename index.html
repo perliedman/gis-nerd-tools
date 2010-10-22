@@ -181,8 +181,13 @@
 
             function swapGeometryCoordinates(geometry) {
                 if (geometry.components) {
+                    var swapSet = {}
                     for (var i = 0; i < geometry.components.length; i++) {
-                        swapGeometryCoordinates(geometry.components[i]);
+                        var component = geometry.components[i];
+                        if (!swapSet[component]) {
+                            swapGeometryCoordinates(component);
+                            swapSet[component] = true;
+                        }
                     }
                 } else {
                     var temp = geometry.x;
