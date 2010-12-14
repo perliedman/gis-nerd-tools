@@ -106,9 +106,6 @@ function updatedFeature() {
     var wktField = $('#wkt');
 
     var feature = wktFormat.read(jQuery.trim(wktField.val()));
-    if ($('#swapCoordinates').is(':checked')) {
-        swapFeatureCoordinates(feature);
-    }
 
     /*feature.style = {
         'strokeColor': '#a00000',
@@ -120,18 +117,35 @@ function updatedFeature() {
     if (feature != null) {
         wktField.removeClass('error');
 
+        if ($('#swapCoordinates').is(':checked')) {
+            swapFeatureCoordinates(feature);
+        }
+
         getCurrentCoordinateSystem(function(coordinateSystem) {
-            feature.geometry.transform(coordinateSystem,
-                mapCoordinateSystem);
+            features = transformFeatures(feature, coordinateSystem);
 
             vectorLayer.removeAllFeatures();
-            vectorLayer.addFeatures([feature]);
+            vectorLayer.addFeatures(features);
             map.zoomToExtent(vectorLayer.getDataExtent());
         });
     } else if (!wktField.hasClass('error')) {
         wktField.addClass('error');
     }
 };
+
+function transformFeatures(features, coordinateSystem) {
+    if ($.isArray(features)) {
+        for (var i = 0; i < features.length; i++) {
+            transformFeatures(features[i]);
+        }
+
+        return features;
+    } else {
+        features.geometry.transform(coordinateSystem,
+            mapCoordinateSystem);
+        return [features];
+    }
+}
 
 function getCurrentCoordinateSystem(callback) {
     var coordinateSystemField = $('#coordinateSystemName');
@@ -163,7 +177,13 @@ function waitForCoordinateSystem(cs, callback) {
 }
 
 function swapFeatureCoordinates(feature) {
-    swapGeometryCoordinates(feature.geometry);
+    if ($.isArray(feature)) {
+        for (var i = 0; i < feature.length; i++) {
+            swapFeatureCoordinates(feature[i]);
+        }
+    } else {
+        swapGeometryCoordinates(feature.geometry);
+    }
 }
 
 function swapGeometryCoordinates(geometry) {
