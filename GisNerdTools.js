@@ -136,7 +136,7 @@ function updatedFeature() {
 function transformFeatures(features, coordinateSystem) {
     if ($.isArray(features)) {
         for (var i = 0; i < features.length; i++) {
-            transformFeatures(features[i]);
+            transformFeatures(features[i], coordinateSystem);
         }
 
         return features;
