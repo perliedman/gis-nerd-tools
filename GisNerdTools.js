@@ -39,6 +39,11 @@ var coordSystems = {};
 var mapCoordinateSystem = 
     new OpenLayers.Projection('EPSG:900913');
 
+Proj4js.reportError = function(msg) {
+    $('#errorMessage').text(msg);
+    $('#wait').hide();
+}
+
 $(document).ready(function() {
     map = new OpenLayers.Map("map");
     var mapnik = new OpenLayers.Layer.OSM();
@@ -116,6 +121,7 @@ function updatedFeature() {
     };*/
     if (feature != null) {
         wktField.removeClass('error');
+        $('#errorMessage').text('');
 
         if ($('#swapCoordinates').is(':checked')) {
             swapFeatureCoordinates(feature);
@@ -152,6 +158,7 @@ function getCurrentCoordinateSystem(callback) {
     var csName = jQuery.trim(coordinateSystemField.val());
     var p4cs = new Proj4js.Proj(csName);
     if (coordSystems[csName] == null) {
+        $('#errorMessage').text('');
         $('#wait').show();
         waitForCoordinateSystem(p4cs, function() {
             $('#wait').hide();
