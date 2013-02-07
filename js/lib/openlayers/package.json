@@ -1,0 +1,11 @@
+{
+    "name": "openlayers",
+    "version": "2.12.0",
+    "description": "Javascript map client",
+    "jam": {
+        "main": "OpenLayers.js",
+        "shim": {
+            "exports": "OpenLayers"
+        }
+    }
+}

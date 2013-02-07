@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"/>
+        <title>GIS Nerd Tools</title>
+        <!--[if lt IE 9]>
+        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
+        <link rel="stylesheet" href="style.css"/>
+        <script src="js/lib/require.js" data-main="js/main"></script>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <div id="controlWindow">
+            <h1>GIS Nerd Tools</h1>
+            <form>
+                <p>
+                    Coordinate system:<br/>
+                    <input id="coordinateSystemName" type="text" value="EPSG:4326"/>
+                </p>
+                <p>
+                    Coordinate system definition:<br/>
+                    <input id="coordinateSystemDef" type="text"/>
+                </p>
+                <p>
+                    WKT:<br/>
+                    <textarea id="wkt" cols="36" rows="8"></textarea><br/>
+                    <input id="swapCoordinates" type="checkbox" name="Swap coordinates"/> Swap coordinates<br/>
+                    <button id="updateFeature">Update</button>
+                    <div id="wait">
+                        <img src="throbber.gif" alt="Wait..."/>
+                    </div>
+                    <div id="errorMessage"></div>
+                </p>
+            </form>
+        </div>
+        <div id="coordinate">
+        </div>
+    </body>
+</html>
+
