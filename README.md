@@ -1,23 +1,11 @@
 GIS Nerd Tools
 ==============
 
-The application is 100% browser, no server parts. Uses [Jam](http://jamjs.org/) for package management and [RequireJS](http://requirejs.org/) for dependency resolution.
+Because you use GIS but everything else is too damn complicated.
 
-Requirements
-------------
+Features:
 
- * [Node.js](http://nodejs.org/)
- * [NPM](https://npmjs.org/)
- * [Jam](http://jamjs.org/)
- * [RequireJS](http://requirejs.org/)
+* Displaying WKT geometries
+* Displaying GeoJSON geometries
+* Support for different projections/coordinate systems
 
-Installation
-------------
-
-Before running the first time, run this:
-
-```
-jam install
-```
-
-This will download dependencies and build the config for RequireJS.

@@ -1,13 +1,30 @@
 {
-    "name": "GIS Nerd Tools",
-    "version": "0.1.0",
-    "jam": {
-        "packageDir": "js/lib",
-        "baseUrl": "js",
-        "dependencies": {
-            "proj4js": "~1.1.0",
-            "openlayers": "~2.12.0",
-            "jquery": "~1.8.0"
-        }
-    }
+  "name": "gis-nerd-tools",
+  "version": "0.2.0",
+  "description": "Basic but common tools for geo and GIS nerds",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/perliedman/gis-nerd-tools.git"
+  },
+  "keywords": [
+    "gis",
+    "map",
+    "geojson",
+    "wkt"
+  ],
+  "author": "Per Liedman <per.liedman@kartena.se>",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/perliedman/gis-nerd-tools/issues"
+  },
+  "dependencies": {
+    "leaflet": "~0.7.0",
+    "proj4": "~1.4.1",
+    "reproject": "~0.1.1",
+    "wellknown": "~0.1.2"
+  }
 }
