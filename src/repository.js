@@ -1,7 +1,7 @@
 var L = require('leaflet'),
     parsers = [
       require('wellknown'),
-      function geojson(gj) { return gj; }
+      function geojson(gj) { return JSON.parse(gj); }
     ];
 
 module.exports = L.Class.extend({
