@@ -3,40 +3,25 @@
     <head>
         <meta charset="utf-8"/>
         <title>GIS Nerd Tools</title>
-        <!--[if lt IE 9]>
-        <script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-        <![endif]-->
+        <link rel="stylesheet" href="node_modules/leaflet/dist/leaflet.css"/>
         <link rel="stylesheet" href="style.css"/>
-        <script src="js/lib/require.js" data-main="js/main"></script>
     </head>
 
     <body>
         <div id="map"></div>
-        <div id="controlWindow">
+        <div class="sidebar">
             <h1>GIS Nerd Tools</h1>
-            <form>
-                <p>
-                    Coordinate system:<br/>
-                    <input id="coordinateSystemName" type="text" value="EPSG:4326"/>
-                </p>
-                <p>
-                    Coordinate system definition:<br/>
-                    <input id="coordinateSystemDef" type="text"/>
-                </p>
-                <p>
-                    WKT:<br/>
-                    <textarea id="wkt" cols="36" rows="8"></textarea><br/>
-                    <input id="swapCoordinates" type="checkbox" name="Swap coordinates"/> Swap coordinates<br/>
-                    <button id="updateFeature">Update</button>
-                    <div id="wait">
-                        <img src="throbber.gif" alt="Wait..."/>
-                    </div>
-                    <div id="errorMessage"></div>
-                </p>
-            </form>
+            <textarea id="geom-def" placeholder="WKT or GeoJSON"></textarea>
+            <input id="srs" type="text" value="epsg:4326" />
+            <input id="swap" type="checkbox" />
+            <label for="swap">Reverse coordinate axis</label>
+            <button id="btn-add" type="button">Add</button>
         </div>
-        <div id="coordinate">
+        <div class="coordinate">
+            <ul id="coordinates">
+            </ul>
         </div>
+        <script src="site.js"></script>
     </body>
 </html>
 
