@@ -4,15 +4,21 @@ var L = require('leaflet'),
     Sidebar = require('./sidebar.js'),
     Projections = require('./projections'),
     CoordDisplay = require('./coordinates'),
+    createStyle = require('./feature-style'),
     projs = new Projections(),
     repo = new Repository(projs),
     coordDisplay = new CoordDisplay('coordinates', projs);
-    geomLayer = L.geoJson();
+    geomLayer = L.geoJson(null, {
+        style: createStyle
+    });
+
+L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images';
 
 new Sidebar(repo);
 
 repo.on('added', function(e) {
   geomLayer.addData(e.geojson);
+  map.fitBounds(geomLayer.getBounds());
 });
 
 map.on('click', function(e) {
