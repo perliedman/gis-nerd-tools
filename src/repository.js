@@ -13,7 +13,7 @@ module.exports = L.Class.extend({
     this._projs = projs;
   },
 
-  add: function(def, srs) {
+  add: function(def, srs, reverse) {
     var geojson;
     for (var i = 0; i < parsers.length && !geojson; i++) {
       geojson = parsers[i](def);
@@ -26,6 +26,10 @@ module.exports = L.Class.extend({
     }
 
     this._projs.get(srs, function(name, proj) {
+      if (reverse) {
+        geojson = reproject.reverse(geojson);
+      }
+
       geojson = reproject.toWgs84(geojson, proj);
       this.geoms.push(geojson);
 
