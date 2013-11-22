@@ -23,6 +23,8 @@ module.exports = L.Class.extend({
     } catch (e) {
       if (e.messages) {
         this.showErrors(e.messages);
+      } else {
+        throw e;
       }
     }
   },

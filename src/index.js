@@ -2,7 +2,9 @@ var L = require('leaflet'),
     map = L.map('map'),
     Repository = require('./repository'),
     Sidebar = require('./sidebar.js'),
-    repo = new Repository(),
+    Projections = require('./projections'),
+    projs = new Projections(),
+    repo = new Repository(projs),
     geomLayer = L.geoJson();
 
 new Sidebar(repo);
