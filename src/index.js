@@ -13,6 +13,7 @@ new Sidebar(repo);
 
 repo.on('added', function(e) {
   geomLayer.addData(e.geojson);
+  map.fitBounds(geomLayer.getBounds());
 });
 
 map.on('click', function(e) {
