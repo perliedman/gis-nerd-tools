@@ -1,7 +1,7 @@
 body {
     margin: 0;
     font-family: sans-serif;
-    font-size: 10px;
+    font-size: 14px;
 }
 
 #map {
@@ -10,18 +10,34 @@ body {
     height: 100%;
 }
 
-.sidebar {
-    border-radius: 5px 0 0 5px;
-    padding: 10px;
+.sidebar, .coordinate {
     position: fixed;
-    right: 0;
-    top: 0;
-    width: 320px;
-    height: 100%;
     border: 1px solid #888;
     background-color: white;
     opacity: 0.9;
     z-index: 1000;
+}
+
+.sidebar {
+    padding: 10px;
+    border-radius: 5px 0 0 5px;
+    right: 0;
+    top: 0;
+    width: 320px;
+    height: 100%;
+}
+
+
+.coordinate {
+    padding: 6px;
+    border-radius: 5px;
+    left: 16px;
+    bottom: 16px;
+}
+
+.coordinate ul {
+    list-style-type: none;
+    padding-left: 0;
 }
 
 .sidebar textarea {
@@ -32,22 +48,22 @@ body {
 }
 
 .sidebar input {
+    margin-top: 16px;
+}
+
+.sidebar input[type='text'] {
     border: 1px solid #888;
     width: 304px;
     margin: auto;
     line-height: 1.5;
 }
 
-.sidebar button {
-    float: right;
-    clear: both;
-    margin-right: 14px;
+.sidebar label {
+    vertical-align: text-top;
 }
 
-.coordinate {
-    padding: 10px;
-    position: absolute;
-    left: 16px;
-    bottom: 16px;
-    z-index: 1000;
+.sidebar button {
+    clear: both;
+    float: right;
+    margin-right: 14px;
 }
