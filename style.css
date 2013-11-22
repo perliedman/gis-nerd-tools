@@ -12,39 +12,55 @@ body {
 
 .sidebar, .coordinate {
     position: fixed;
-    border: 1px solid #888;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.65);
     background-color: white;
     opacity: 0.9;
     z-index: 1000;
 }
 
 .sidebar {
-    padding: 10px;
-    border-radius: 5px 0 0 5px;
+    border-radius: 4px 0 0 4px;
     right: 0;
     top: 0;
-    width: 320px;
+    width: 340px;
     height: 100%;
 }
 
 
 .coordinate {
+    font-size: 11px;
     padding: 6px;
-    border-radius: 5px;
-    left: 16px;
-    bottom: 16px;
+    border-radius: 4px;
+    left: 10px;
+    bottom: 20px;
 }
 
 .coordinate ul {
+    margin: 0;
     list-style-type: none;
     padding-left: 0;
 }
 
+.sidebar header {
+    border-bottom: 1px solid #888;
+    margin-bottom: 12px;
+}
+
+.sidebar h1 {
+    font-size: 133%;
+    margin: 4px;
+}
+
 .sidebar textarea {
     border: 1px solid #888;
+    padding: 4px;
     width: 300px;
-    margin: auto;
     height: 240px;
+}
+
+.sidebar form {
+    margin-left: 4px;
+    overflow: hidden;
 }
 
 .sidebar input {
@@ -52,18 +68,21 @@ body {
 }
 
 .sidebar input[type='text'] {
+    display: block;
     border: 1px solid #888;
-    width: 304px;
-    margin: auto;
+    width: 300px;
     line-height: 1.5;
+    padding: 4px;
 }
 
 .sidebar label {
     vertical-align: text-top;
 }
 
+.sidebar form div {
+    text-align: right;
+}
+
 .sidebar button {
-    clear: both;
-    float: right;
-    margin-right: 14px;
+    margin-right: 30px;
 }

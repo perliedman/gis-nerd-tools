@@ -23,7 +23,7 @@ module.exports = L.Class.extend({
       c = transform.forward(lnglat);
       c = c.map(this._formatCoordinateValue);
       li = L.DomUtil.create('li');
-      li.innerHTML = '<em>' + pname + '</em>: ' + c[0] + ' ' + c[1];
+      li.innerHTML = '<strong>' + pname + '</strong>: ' + c[0] + ' ' + c[1];
       el.appendChild(li)
     }
   },

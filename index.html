@@ -10,12 +10,18 @@
     <body>
         <div id="map"></div>
         <div class="sidebar">
-            <h1>GIS Nerd Tools</h1>
-            <textarea id="geom-def" placeholder="WKT or GeoJSON"></textarea>
-            <input id="srs" type="text" value="epsg:4326" />
-            <input id="swap" type="checkbox" />
-            <label for="swap">Reverse coordinate axis</label>
-            <button id="btn-add" type="button">Add</button>
+            <header>
+                <h1>GIS Nerd Tools</h1>
+            </header>
+            <form>
+                <textarea id="geom-def" placeholder="WKT or GeoJSON"></textarea>
+                <input id="srs" type="text" value="epsg:4326" />
+                <input id="swap" type="checkbox" />
+                <label for="swap">Reverse coordinate axis</label>
+                <div>
+                    <button id="btn-add" type="button">Add</button>
+                </div>
+            </form>
         </div>
         <div class="coordinate">
             <ul id="coordinates">
