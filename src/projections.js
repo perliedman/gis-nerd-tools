@@ -9,7 +9,9 @@ if (!window.Proj4js) {
 
 module.exports = L.Class.extend({
   initialize: function() {
-    this._projections = {};
+    this.projections = {
+      "EPSG:4326": proj4.WGS84
+    };
   },
 
   get: function(name, cb, context) {
@@ -29,7 +31,7 @@ module.exports = L.Class.extend({
     }
 
     name = authority + ':' + code;
-    proj = this._projections[name];
+    proj = this.projections[name];
 
     if (!proj) {
       if (window.Proj4js.defs[name]) {
@@ -65,7 +67,7 @@ module.exports = L.Class.extend({
 
   _store: function(name, cb, context) {
     var p = proj4.Proj(window.Proj4js.defs[name]);
-    this._projections[name] = p;
+    this.projections[name] = p;
     cb.call(context || cb, name, p);
   }
 });
