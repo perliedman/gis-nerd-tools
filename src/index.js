@@ -9,7 +9,15 @@ var L = require('leaflet'),
     repo = new Repository(projs),
     coordDisplay = new CoordDisplay('coordinates', projs);
     geomLayer = L.geoJson(null, {
-        style: createStyle
+      style: createStyle,
+      onEachFeature: function(f, layer) {
+        layer.bindPopup(
+          f.properties._gnt.id + '<br/>' +
+          f.properties._gnt.srs + '<br/><blockquote>' +
+          f.properties._gnt.def.substring(0, 160) +
+          '</blockquote>'
+        );
+      }
     });
 
 L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images';
@@ -26,7 +34,7 @@ map.on('click', function(e) {
 });
 
 L.tileLayer('https://a.tiles.mapbox.com/v3/liedman.map-mmgw7jk5/{z}/{x}/{y}.png', {
-    attribution: 'Maps by <a href="https://www.mapbox.com/about/maps/">MapBox</a>'
+  attribution: 'Maps by <a href="https://www.mapbox.com/about/maps/">MapBox</a>'
 }).addTo(map);
 
 L.control.attribution({ position: 'bottomleft' }).addTo(map);

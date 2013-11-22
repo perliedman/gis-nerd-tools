@@ -31,7 +31,22 @@ module.exports = L.Class.extend({
       }
 
       geojson = reproject.toWgs84(geojson, proj);
+
       this.geoms.push(geojson);
+
+      if (geojson.type !== 'Feature') {
+        geojson = {
+          type: 'Feature',
+          geometry: geojson,
+          properties: {}
+        };
+      }
+
+      geojson.properties._gnt = {
+        id: this.geoms.length - 1,
+        def: def,
+        srs: srs
+      };
 
       this.fire('added', {
         geojson: geojson
