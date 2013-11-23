@@ -25,6 +25,7 @@
     "leaflet": "~0.7.0",
     "proj4": "~1.4.1",
     "reproject": "~0.1.1",
-    "wellknown": "~0.1.2"
+    "wellknown": "~0.1.2",
+    "geojsonhint": "~0.2.1"
   }
 }

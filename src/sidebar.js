@@ -22,8 +22,8 @@ module.exports = L.Class.extend({
       this._repo.add(def, srs, swapCtl.checked);
       defCtl.value = '';
     } catch (e) {
-      if (e.messages) {
-        this.showErrors(e.messages);
+      if (L.Util.isArray(e)) {
+        this.showErrors(e);
       } else {
         throw e;
       }
@@ -31,6 +31,6 @@ module.exports = L.Class.extend({
   },
 
   showErrors: function(errors) {
-    alert(errors.join('\n'));
+    alert(errors.map(function(e) { return e.message; }).join('\n'));
   }
 });

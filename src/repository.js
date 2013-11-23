@@ -1,9 +1,7 @@
 var L = require('leaflet'),
     reproject = require('reproject'),
-    parsers = [
-      require('wellknown'),
-      function geojson(gj) { return JSON.parse(gj); }
-    ];
+    wktParser = require('wellknown'),
+    geojsonhint = require('geojsonhint');
 
 module.exports = L.Class.extend({
   includes: L.Mixin.Events,
@@ -14,10 +12,7 @@ module.exports = L.Class.extend({
   },
 
   add: function(def, srs, reverse) {
-    var geojson;
-    for (var i = 0; i < parsers.length && !geojson; i++) {
-      geojson = parsers[i](def);
-    }
+    var geojson = this._parse(def);
 
     if (!geojson) {
       throw {
@@ -52,6 +47,29 @@ module.exports = L.Class.extend({
         geojson: geojson
       });
     }, this);
+  },
 
+  _parse: function(def) {
+    var errors,
+        result;
+    if (def.indexOf('{') >= 0) {
+      // This looks like GeoJSON
+      errors = geojsonhint.hint(def);
+      if (!errors || errors.length === 0) {
+        return JSON.parse(def);
+      } else {
+        throw errors;
+      }
+    }
+
+    result = wktParser(def);
+    if (result) {
+      return result;
+    } else {
+      throw [{
+        message: 'Invalid WKT (and it didn\'t appear to be GeoJSON either).',
+        line: 1
+      }];
+    }
   }
 });

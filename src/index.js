@@ -26,7 +26,7 @@ new Sidebar(repo);
 
 repo.on('added', function(e) {
   geomLayer.addData(e.geojson);
-  map.fitBounds(geomLayer.getBounds());
+  map.fitBounds(geomLayer.getBounds(), {maxZoom: 14});
 });
 
 map.on('click', function(e) {
