@@ -46,6 +46,13 @@ body {
     margin-bottom: 12px;
 }
 
+.sidebar footer {
+    font-size: 75%;
+    position: absolute;
+    bottom: 4px;
+    padding: 4px;
+}
+
 .sidebar h1 {
     font-size: 133%;
     margin: 4px;
