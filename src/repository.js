@@ -3,6 +3,23 @@ var L = require('leaflet'),
     wktParser = require('wellknown'),
     geojsonhint = require('geojsonhint');
 
+function parseBBox(def) {
+  var parts = def.replace(',', ' ').split(' '),
+      c = parts.map(function(v) { return parseFloat(v); });
+
+  if (parts.length >= 4) {
+    return {
+      type: 'Polygon',
+      coordinates: [[
+        [c[0], c[1]],
+        [c[2], c[1]],
+        [c[2], c[3]],
+        [c[0], c[3]]
+      ]]
+    };
+  }
+}
+
 module.exports = L.Class.extend({
   includes: L.Mixin.Events,
 
@@ -65,11 +82,16 @@ module.exports = L.Class.extend({
     result = wktParser(def);
     if (result) {
       return result;
-    } else {
-      throw [{
-        message: 'Invalid WKT (and it didn\'t appear to be GeoJSON either).',
-        line: 1
-      }];
     }
+
+    result = parseBBox(def);
+    if (result) {
+      return result;
+    }
+
+    throw [{
+      message: 'Sorry, couldn\'t recognize this. It doesn\'t appear to be GeoJSON, WKT or bounding box coordinates :(',
+      line: 1
+    }];
   }
 });
