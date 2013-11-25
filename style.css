@@ -98,3 +98,17 @@ body {
     max-height: 64px;
     overflow: hidden;
 }
+
+.error-list {
+    background-color: #fbb;
+    border: 1px solid #faa;
+    border-radius: 2px;
+    margin: 10px;
+    margin-right: 30px;
+    padding: 8px;
+    list-style: none;
+}
+
+.hidden {
+    display: none;
+}
