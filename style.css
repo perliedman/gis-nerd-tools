@@ -93,3 +93,8 @@ body {
 .sidebar button {
     margin-right: 30px;
 }
+
+.feature-def {
+    max-height: 64px;
+    overflow: hidden;
+}

@@ -7,17 +7,10 @@ var L = require('leaflet'),
     createStyle = require('./feature-style'),
     projs = new Projections(),
     repo = new Repository(projs),
-    coordDisplay = new CoordDisplay('coordinates', projs);
+    coordDisplay = new CoordDisplay('coordinates', projs),
     geomLayer = L.geoJson(null, {
       style: createStyle,
-      onEachFeature: function(f, layer) {
-        layer.bindPopup(
-          f.properties._gnt.id + '<br/>' +
-          f.properties._gnt.srs + '<br/><blockquote>' +
-          f.properties._gnt.def.substring(0, 160) +
-          '</blockquote>'
-        );
-      }
+      onEachFeature: require('./feature-control')
     });
 
 L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images';
