@@ -10709,6 +10709,7 @@ module.exports = L.Class.extend({
     try {
       this._repo.add(def, srs, swapCtl.checked);
       defCtl.value = '';
+      L.DomUtil.addClass(L.DomUtil.get('error-list'), 'hidden');
     } catch (e) {
       if (L.Util.isArray(e)) {
         this.showErrors(e);
@@ -10719,7 +10720,15 @@ module.exports = L.Class.extend({
   },
 
   showErrors: function(errors) {
-    alert(errors.map(function(e) { return e.message; }).join('\n'));
+    var el = L.DomUtil.get('error-list');
+
+    el.innerHTML = '';
+    errors.forEach(function(e) {
+      var li = L.DomUtil.create('li', null, el);
+      li.innerHTML = e.message;
+    });
+
+    L.DomUtil.removeClass(el, 'hidden');
   }
 });
 
