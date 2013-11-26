@@ -98,17 +98,35 @@ function hint(str) {
             return position(coords, line);
         } else {
             if (depth === 1 && type) {
-                if (type === 'LinearRing' && coords.length < 4) {
-                    errors.push({
-                        message: 'a LinearRing of coordinates needs to have four or more positions',
-                        line: line
-                    });
+                if (type === 'LinearRing') {
+                    if (coords.length < 4) {
+                        errors.push({
+                            message: 'a LinearRing of coordinates needs to have four or more positions',
+                            line: line
+                        });
+                    }
+                    if (coords.length &&
+                        (coords[coords.length - 1].length !== coords[0].length ||
+                        !coords[coords.length - 1].every(function(position, index) {
+                        return coords[0][index] === position;
+                    }))) {
+                        errors.push({
+                            message: 'the first and last positions in a LinearRing of coordinates must be the same',
+                            line: line
+                        });
+                    }
                 } else if (type === 'Line' && coords.length < 2) {
                     errors.push({
                         message: 'a line needs to have two or more coordinates to be valid',
                         line: line
                     });
                 }
+            }
+            if (!Array.isArray(coords)) {
+                return errors.push({
+                    message: 'coordinates must be list of positions',
+                    line: line
+                });
             }
             coords.forEach(function(c) {
                 positionArray(c, type, depth - 1, c.__line__ || line);
@@ -129,6 +147,11 @@ function hint(str) {
                     requiredProperty(_.crs.properties, 'href', 'string');
                 }
             }
+        } else {
+            errors.push({
+                message: 'the value of the crs property must be an object, not a ' + (typeof _.crs),
+                line: _.__line__
+            });
         }
     }
 
@@ -10487,6 +10510,9 @@ var L = require('leaflet'),
     coordDisplay = new CoordDisplay('coordinates', projs),
     geomLayer = L.geoJson(null, {
       style: createStyle,
+      pointToLayer: function(feature, latlng) {
+        return L.circle(latlng, 24);
+      },
       onEachFeature: require('./feature-control')
     });
 
@@ -10594,7 +10620,7 @@ var L = require('leaflet'),
     geojsonhint = require('geojsonhint');
 
 function parseBBox(def) {
-  var parts = def.replace(',', ' ').split(' '),
+  var parts = def.replace(/[,;:\/]/g, ' ').split(' '),
       c = parts.map(function(v) { return parseFloat(v); });
 
   if (parts.length >= 4) {
