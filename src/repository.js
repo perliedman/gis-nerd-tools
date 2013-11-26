@@ -4,7 +4,7 @@ var L = require('leaflet'),
     geojsonhint = require('geojsonhint');
 
 function parseBBox(def) {
-  var parts = def.replace(',', ' ').split(' '),
+  var parts = def.replace(/[,;:\/]/g, ' ').split(' '),
       c = parts.map(function(v) { return parseFloat(v); });
 
   if (parts.length >= 4) {
