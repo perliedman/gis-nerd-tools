@@ -10,6 +10,9 @@ var L = require('leaflet'),
     coordDisplay = new CoordDisplay('coordinates', projs),
     geomLayer = L.geoJson(null, {
       style: createStyle,
+      pointToLayer: function(feature, latlng) {
+        return L.circle(latlng, 24);
+      },
       onEachFeature: require('./feature-control')
     });
 
