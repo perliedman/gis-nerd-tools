@@ -3,11 +3,15 @@ var L = require('leaflet'),
     wktParser = require('wellknown'),
     geojsonhint = require('geojsonhint');
 
-function parseBBox(def) {
-  var parts = def.replace(/[,;:\/]/g, ' ').split(' '),
+function parseRawCoords(def) {
+  var parts = def.
+      replace(/[\n\(\)\[\]]/g, ' ').
+      replace(/[,;:\/]/g, ' ').
+      split(' ').
+      filter(function(s) { return s !== ''; }),
       c = parts.map(function(v) { return parseFloat(v); });
 
-  if (parts.length >= 4) {
+  if (parts.length === 4) {
     return {
       type: 'Polygon',
       coordinates: [[
@@ -17,6 +21,19 @@ function parseBBox(def) {
         [c[0], c[3]]
       ]]
     };
+  } else if (parts.length >= 2) {
+    return (function(cs) {
+      var r = {
+            type: 'MultiPoint',
+            coordinates: []
+          },
+          i;
+      for (i = 0; i < cs.length; i += 2) {
+        r.coordinates.push([c[i], c[i + 1]]);
+      }
+
+      return r;
+    })(parts);
   }
 }
 
@@ -95,7 +112,7 @@ module.exports = L.Class.extend({
       return result;
     }
 
-    result = parseBBox(def);
+    result = parseRawCoords(def);
     if (result) {
       return result;
     }
