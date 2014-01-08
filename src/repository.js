@@ -29,7 +29,8 @@ module.exports = L.Class.extend({
   },
 
   add: function(def, srs, reverse) {
-    var geojson = this._parse(def);
+    var geojson = this._parse(def),
+        i;
 
     if (!geojson) {
       throw {
@@ -37,6 +38,16 @@ module.exports = L.Class.extend({
       };
     }
 
+    if (geojson.type === 'FeatureCollection') {
+      for (i = 0; i < geojson.features.length; i++) {
+        this._addSingle(geojson.features[i], srs, reverse, JSON.stringify(geojson.features[i]));
+      }
+    } else {
+      this._addSingle(geojson, srs, reverse, def);
+    }
+  },
+
+  _addSingle: function(geojson, srs, reverse, def) {
     this._projs.get(srs, function(name, proj) {
       if (reverse) {
         geojson = reproject.reverse(geojson);
