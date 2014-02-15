@@ -16,6 +16,14 @@ var L = require('leaflet'),
       onEachFeature: require('./feature-control')
     });
 
+var config = window.config || {
+  tiles: {
+    url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+  }
+};
+
+
 L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images';
 
 new Sidebar(repo);
