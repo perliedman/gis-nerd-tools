@@ -14,7 +14,8 @@ module.exports = function(grunt) {
                 'site.js',
                 'node_modules/leaflet/dist/leaflet.css',
                 'node_modules/leaflet/dist/images/*'
-            ]
+            ],
+            add: true
         },
         watch: {
             files: ['src/*.js'],

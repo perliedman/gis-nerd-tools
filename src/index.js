@@ -1,10 +1,10 @@
 var L = require('leaflet'),
-    map = L.map('map', { attributionControl: false }),
     Repository = require('./repository'),
     Sidebar = require('./sidebar.js'),
     Projections = require('./projections'),
     CoordDisplay = require('./coordinates'),
     createStyle = require('./feature-style'),
+    map = L.map('map', { attributionControl: false }),
     projs = new Projections(),
     repo = new Repository(projs),
     coordDisplay = new CoordDisplay('coordinates', projs),
@@ -29,8 +29,8 @@ map.on('click', function(e) {
   coordDisplay.show(e.latlng);
 });
 
-L.tileLayer('https://a.tiles.mapbox.com/v3/liedman.map-mmgw7jk5/{z}/{x}/{y}.png', {
-  attribution: 'Maps by <a href="https://www.mapbox.com/about/maps/">MapBox</a>'
+L.tileLayer(config.tiles.url, {
+  attribution: config.tiles.atttribution
 }).addTo(map);
 
 L.control.attribution({ position: 'bottomleft' }).addTo(map);
