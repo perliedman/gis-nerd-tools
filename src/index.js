@@ -8,12 +8,16 @@ var L = require('leaflet'),
     projs = new Projections(),
     repo = new Repository(projs),
     coordDisplay = new CoordDisplay('coordinates', projs),
+    geojsonLayer = {},
     geomLayer = L.geoJson(null, {
       style: createStyle,
       pointToLayer: function(feature, latlng) {
         return L.circle(latlng, 24);
       },
-      onEachFeature: require('./feature-control')
+      onEachFeature: function(f, layer) {
+        geojsonLayer[L.stamp(f)] = layer;
+        require('./feature-control')(f, layer);
+      }
     });
 
 var config = window.config || {
@@ -31,6 +35,12 @@ new Sidebar(repo);
 repo.on('added', function(e) {
   geomLayer.addData(e.geojson);
   map.fitBounds(geomLayer.getBounds(), {maxZoom: 14});
+});
+
+repo.on('removed', function(e) {
+  var id = L.stamp(e.geojson);
+  geomLayer.removeLayer(geojsonLayer[id]);
+  delete geomLayer[id];
 });
 
 map.on('click', function(e) {

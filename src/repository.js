@@ -41,7 +41,7 @@ module.exports = L.Class.extend({
   includes: L.Mixin.Events,
 
   initialize: function(projs) {
-    this.geoms = [];
+    this.geoms = {};
     this._projs = projs;
   },
 
@@ -64,6 +64,14 @@ module.exports = L.Class.extend({
     }
   },
 
+  remove: function(geojson) {
+    var id = L.stamp(geojson);
+    if (id) {
+      delete this.geoms[id];
+      this.fire('removed', {geojson: geojson});
+    }
+  },
+
   _addSingle: function(geojson, srs, reverse, def) {
     this._projs.get(srs, function(name, proj) {
       if (reverse) {
@@ -71,8 +79,6 @@ module.exports = L.Class.extend({
       }
 
       geojson = reproject.toWgs84(geojson, proj);
-
-      this.geoms.push(geojson);
 
       if (geojson.type !== 'Feature') {
         geojson = {
@@ -83,10 +89,11 @@ module.exports = L.Class.extend({
       }
 
       geojson.properties._gnt = {
-        id: this.geoms.length - 1,
         def: def,
         srs: srs
       };
+
+      this.geoms[L.stamp(geojson)] = geojson;
 
       this.fire('added', {
         geojson: geojson

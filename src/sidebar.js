@@ -3,6 +3,7 @@ var L = require('leaflet');
 module.exports = L.Class.extend({
   initialize: function(repo) {
     this._repo = repo;
+    this._geojsonItems = {};
     this._setupEvents();
   },
 
@@ -10,6 +11,8 @@ module.exports = L.Class.extend({
     var addBtn = L.DomUtil.get('btn-add');
 
     L.DomEvent.addListener(addBtn, 'click', this._addGeometry, this);
+    this._repo.on('added', this._onItemAdded, this);
+    this._repo.on('removed', this._onItemRemoved, this);
   },
 
   _addGeometry: function() {
@@ -41,5 +44,25 @@ module.exports = L.Class.extend({
     });
 
     L.DomUtil.removeClass(el, 'hidden');
+  },
+
+  _onItemAdded: function(e) {
+    var item = L.DomUtil.create('li', '', L.DomUtil.get('items')),
+        delBtn;
+    item.innerHTML = '<strong>' + e.geojson.type + '</strong><br/>' +
+      '<span class="def">' + e.geojson.properties._gnt.def + '</span>';
+    delBtn = L.DomUtil.create('button', 'delete-btn', item);
+    delBtn.type = 'button';
+    delBtn.innerHTML = '\u2212';
+    L.DomEvent.addListener(delBtn, 'click', function() {
+      this._repo.remove(e.geojson);
+    }, this);
+    this._geojsonItems[L.stamp(e.geojson)] = item;
+  },
+
+  _onItemRemoved: function(e) {
+    var id = L.stamp(e.geojson);
+    L.DomUtil.get('items').removeChild(this._geojsonItems[id]);
+    delete this._geojsonItems[id];
   }
 });
