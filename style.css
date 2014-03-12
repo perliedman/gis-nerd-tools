@@ -112,3 +112,34 @@ body {
 .hidden {
     display: none;
 }
+
+.items-container {
+    max-height: 33%;
+    overflow-y: auto;
+}
+
+.items {
+    list-style-type: none;
+    border-bottom: 1px solid #888;
+    padding: 0;
+}
+
+.items li {
+    border-top: 1px solid #888;
+    padding-left: 4px;
+}
+
+.delete-btn {
+    float: right;
+}
+
+.row {
+    clear: both;
+}
+
+.def {
+  width: 300px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

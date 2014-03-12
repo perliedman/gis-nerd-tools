@@ -90,7 +90,8 @@ module.exports = L.Class.extend({
 
       geojson.properties._gnt = {
         def: def,
-        srs: srs
+        srs: srs,
+        reverse: reverse
       };
 
       this.geoms[L.stamp(geojson)] = geojson;

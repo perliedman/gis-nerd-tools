@@ -48,15 +48,20 @@ module.exports = L.Class.extend({
 
   _onItemAdded: function(e) {
     var item = L.DomUtil.create('li', '', L.DomUtil.get('items')),
+        gnt = e.geojson.properties._gnt,
         delBtn;
-    item.innerHTML = '<strong>' + e.geojson.type + '</strong><br/>' +
-      '<span class="def">' + e.geojson.properties._gnt.def + '</span>';
-    delBtn = L.DomUtil.create('button', 'delete-btn', item);
+    item.innerHTML = '<div><strong>' + e.geojson.type + '</strong> (' +
+      gnt.srs + (gnt.reverse ? ', reversed' : '') + ')</div>' +
+      '<div class="def" title="' + gnt.def + '">' +
+      gnt.def + '</div>' +
+      '<div class="row"></div>';
+    delBtn = L.DomUtil.create('button', 'delete-btn');
     delBtn.type = 'button';
     delBtn.innerHTML = '\u2212';
     L.DomEvent.addListener(delBtn, 'click', function() {
       this._repo.remove(e.geojson);
     }, this);
+    item.insertBefore(delBtn, item.children[0]);
     this._geojsonItems[L.stamp(e.geojson)] = item;
   },
 
