@@ -15,10 +15,14 @@
             </header>
             <form>
                 <textarea id="geom-def" placeholder="WKT, GeoJSON or coords"></textarea>
-                <input id="srs" type="text" value="epsg:4326" />
-                <input id="swap" type="checkbox" />
-                <label for="swap">Reverse coordinate axis</label>
-                <div>
+                <div class="control-container">
+                    EPSG:<input id="srs" type="text" value="4326" />
+                </div>
+                <div class="control-container">
+                    <input id="swap" type="checkbox" />
+                    <label for="swap">Reverse coordinate axis</label>
+                </div>
+                <div class="control-container submit-control">
                     <button id="btn-add" type="button">Add</button>
                 </div>
             </form>

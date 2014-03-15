@@ -70,28 +70,26 @@ body {
     overflow: hidden;
 }
 
-.sidebar input {
+.control-container {
     margin-top: 16px;
+    margin-right: 26px;
 }
 
 .sidebar input[type='text'] {
-    display: block;
+    float: right;
     border: 1px solid #888;
-    width: 300px;
+    width: 256px;
     line-height: 1.5;
     padding: 4px;
+    margin-top: -7px;
 }
 
 .sidebar label {
     vertical-align: text-top;
 }
 
-.sidebar form div {
+.submit-control {
     text-align: right;
-}
-
-.sidebar button {
-    margin-right: 30px;
 }
 
 .feature-def {

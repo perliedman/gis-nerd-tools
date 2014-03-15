@@ -10828,7 +10828,7 @@ if (!window.Proj4js) {
 module.exports = L.Class.extend({
   initialize: function() {
     this.projections = {
-      "EPSG:4326": proj4.WGS84
+      'EPSG:4326': proj4.WGS84
     };
   },
 
@@ -10865,8 +10865,7 @@ module.exports = L.Class.extend({
   _fetch: function(authority, code, cb, context) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = 'http://www.spatialreference.org/ref/' +
-      authority.toLowerCase() +'/' + code + '/proj4js/';
+    script.src = 'http://epsg.io/' + code + '.js';
     document.getElementsByTagName('head')[0].appendChild(script);
     this._poll(authority, code, cb, context);
   },
