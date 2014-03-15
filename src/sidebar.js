@@ -1,4 +1,8 @@
-var L = require('leaflet');
+var L = require('leaflet'),
+    geocoder;
+
+require('leaflet-control-geocoder')
+geocoder = L.Control.Geocoder.nominatim();
 
 module.exports = L.Class.extend({
   initialize: function(repo) {
@@ -48,13 +52,8 @@ module.exports = L.Class.extend({
 
   _onItemAdded: function(e) {
     var item = L.DomUtil.create('li', '', L.DomUtil.get('items')),
-        gnt = e.geojson.properties._gnt,
         delBtn;
-    item.innerHTML = '<div><strong>' + e.geojson.type + '</strong> (' +
-      gnt.srs + (gnt.reverse ? ', reversed' : '') + ')</div>' +
-      '<div class="def" title="' + gnt.def + '">' +
-      gnt.def + '</div>' +
-      '<div class="row"></div>';
+    item.appendChild(this._getItemDescription(e.geojson));
     delBtn = L.DomUtil.create('button', 'delete-btn');
     delBtn.type = 'button';
     delBtn.innerHTML = '\u2212';
@@ -69,5 +68,70 @@ module.exports = L.Class.extend({
     var id = L.stamp(e.geojson);
     L.DomUtil.get('items').removeChild(this._geojsonItems[id]);
     delete this._geojsonItems[id];
+  },
+
+  _getItemDescription: function(geojson) {
+    var gnt = geojson.properties._gnt,
+        r = L.DomUtil.create('div', ''),
+        title = L.DomUtil.create('strong', '', r),
+        srsNode = L.DomUtil.create('span', '', r),
+        srsDesc = ' (<a href="http://epsg.io/' + gnt.srs + '">' + gnt.srs + '</a>' +
+        (gnt.reverse ? ', reversed' : '') + ')',
+        def = L.DomUtil.create('div', 'def', r);
+
+    title.innerHTML = geojson.geometry.type;
+    srsNode.innerHTML = srsDesc;
+    def.innerHTML = '<div class="def" title="' + gnt.def + '">' +
+      gnt.def + '</div>' +
+      '<div class="row"></div>';
+
+    geocoder.reverse(this._bounds(geojson).getCenter(), 262144, function(results) {
+      if (results && results.length > 0 && results[0].name) {
+        title.innerHTML = geojson.geometry.type + ' near ' + results[0].name.split(',')[0].trim();
+      }
+    });
+
+    return r;
+  },
+
+  _bounds: function (geojson) {
+    function isXY(list) {
+      return list.length === 2 &&
+        typeof list[0] === 'number' &&
+        typeof list[1] === 'number';
+    }
+
+    var b,
+        cs,
+        c,
+        i;
+
+    // TODO: this is messy and could probably be simplified
+    if (geojson.geometry) {
+      return this._bounds(geojson.geometry);
+    } else if (geojson.geometries) {
+      for (i = 0; i < geojson.geometries.length; i++) {
+        b = b ? b.extend(this._bounds(geojson.geometries[i])) : this._bounds(geojson.geometries[i]);
+      }
+    } else if (geojson.features) {
+      for (i = 0; i < geojson.features.length; i++) {
+        b = b ? b.extend(this._bounds(geojson.features[i])) : this._bounds(geojson.features[i]);
+      }
+    } else if (geojson.coordinates && isXY(geojson.coordinates)) {
+      c = geojson.coordinates;
+      return L.latLngBounds(L.latLng(c[1], c[0]), L.latLng(c[1], c[0]));
+    } else {
+      cs = geojson.coordinates || geojson;
+      for (i = 0; i < cs.length; i++) {
+        c = cs[i];
+        if (isXY(c)) {
+          b = b ? b.extend(L.latLng(c[1], c[0])) : L.latLngBounds(L.latLng(c[1], c[0]), L.latLng(c[1], c[0]));
+        } else {
+          b = b ? b.extend(this._bounds(c)) : this._bounds(c);
+        }
+      }
+    }
+
+    return b;
   }
 });

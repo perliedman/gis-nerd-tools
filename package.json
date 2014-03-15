@@ -26,7 +26,8 @@
     "proj4": "~1.4.1",
     "reproject": "~0.1.1",
     "wellknown": "~0.1.2",
-    "geojsonhint": "~0.2.1"
+    "geojsonhint": "~0.2.1",
+    "leaflet-control-geocoder": "^0.2.1"
   },
   "devDependencies": {
     "grunt": "~0.4.2",
