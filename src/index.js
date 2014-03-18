@@ -3,56 +3,33 @@ var L = require('leaflet'),
     Sidebar = require('./sidebar.js'),
     Projections = require('./projections'),
     CoordDisplay = require('./coordinates'),
-    createStyle = require('./feature-style'),
-    map = L.map('map', { attributionControl: false }),
+    Map = require('./map'),
+    map = new Map('map'),
     projs = new Projections(),
     repo = new Repository(projs),
-    coordDisplay = new CoordDisplay('coordinates', projs),
-    geojsonLayer = {},
-    geomLayer = L.geoJson(null, {
-      style: createStyle,
-      pointToLayer: function(feature, latlng) {
-        return L.circle(latlng, 24);
-      },
-      onEachFeature: function(f, layer) {
-        geojsonLayer[L.stamp(f)] = layer;
-        require('./feature-control')(f, layer);
-      }
-    });
-
-var config = window.config || {
-  tiles: {
-    url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-  }
-};
-
+    sidebar = new Sidebar(),
+    coordDisplay = new CoordDisplay('coordinates', projs);
 
 L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images';
 
-new Sidebar(repo);
-
-repo.on('added', function(e) {
-  geomLayer.addData(e.geojson);
-  map.fitBounds(geomLayer.getBounds(), {maxZoom: 14});
+sidebar.on('featureCreated', function(e) {
+  repo.add(e.def, e.srs, e.reverse);
 });
-
+sidebar.on('featureRemoved', function(e) {
+  repo.remove(e.geojson);
+});
+repo.on('added', function(e) {
+  sidebar.addFeature(e.geojson);
+  map.add(e.geojson);
+});
 repo.on('removed', function(e) {
-  var id = L.stamp(e.geojson);
-  geomLayer.removeLayer(geojsonLayer[id]);
-  delete geomLayer[id];
+  sidebar.removeFeature(e.geojson);
+  map.remove(e.geojson);
+});
+sidebar.on('featureSelected', function(e) {
+  map.highlightFeature(e.geojson);
 });
 
 map.on('click', function(e) {
   coordDisplay.show(e.latlng);
 });
-
-L.tileLayer(config.tiles.url, {
-  attribution: config.tiles.atttribution
-}).addTo(map);
-
-L.control.attribution({ position: 'bottomleft' }).addTo(map);
-
-geomLayer.addTo(map);
-map.setView([0, 0], 2);
-

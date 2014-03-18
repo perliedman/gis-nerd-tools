@@ -1,12 +1,13 @@
 var L = require('leaflet'),
     geocoder;
 
-require('leaflet-control-geocoder')
+require('leaflet-control-geocoder');
 geocoder = L.Control.Geocoder.nominatim();
 
 module.exports = L.Class.extend({
-  initialize: function(repo) {
-    this._repo = repo;
+  includes: L.Mixin.Events,
+
+  initialize: function() {
     this._geojsonItems = {};
     this._setupEvents();
   },
@@ -15,8 +16,6 @@ module.exports = L.Class.extend({
     var addBtn = L.DomUtil.get('btn-add');
 
     L.DomEvent.addListener(addBtn, 'click', this._addGeometry, this);
-    this._repo.on('added', this._onItemAdded, this);
-    this._repo.on('removed', this._onItemRemoved, this);
   },
 
   _addGeometry: function() {
@@ -26,7 +25,11 @@ module.exports = L.Class.extend({
         def = defCtl.value,
         srs = srsCtl.value;
     try {
-      this._repo.add(def, srs, swapCtl.checked);
+      this.fire('featureCreated', {
+        def: def,
+        srs: srs,
+        reverse: swapCtl.checked
+      });
       defCtl.value = '';
       L.DomUtil.addClass(L.DomUtil.get('error-list'), 'hidden');
     } catch (e) {
@@ -50,22 +53,25 @@ module.exports = L.Class.extend({
     L.DomUtil.removeClass(el, 'hidden');
   },
 
-  _onItemAdded: function(e) {
+  addFeature: function(geojson) {
     var item = L.DomUtil.create('li', '', L.DomUtil.get('items')),
         delBtn;
-    item.appendChild(this._getItemDescription(e.geojson));
+    item.appendChild(this._getItemDescription(geojson));
     delBtn = L.DomUtil.create('button', 'delete-btn');
     delBtn.type = 'button';
     delBtn.innerHTML = '\u2212';
     L.DomEvent.addListener(delBtn, 'click', function() {
-      this._repo.remove(e.geojson);
+      this.fire('featureRemoved', {geojson: geojson});
+    }, this);
+    L.DomEvent.addListener(item, 'click', function() {
+      this.fire('featureSelected', {geojson: geojson});
     }, this);
     item.insertBefore(delBtn, item.children[0]);
-    this._geojsonItems[L.stamp(e.geojson)] = item;
+    this._geojsonItems[L.stamp(geojson)] = item;
   },
 
-  _onItemRemoved: function(e) {
-    var id = L.stamp(e.geojson);
+  removeFeature: function(geojson) {
+    var id = L.stamp(geojson);
     L.DomUtil.get('items').removeChild(this._geojsonItems[id]);
     delete this._geojsonItems[id];
   },
