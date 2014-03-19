@@ -11228,61 +11228,100 @@ var L = require('leaflet'),
     Sidebar = require('./sidebar.js'),
     Projections = require('./projections'),
     CoordDisplay = require('./coordinates'),
-    createStyle = require('./feature-style'),
-    map = L.map('map', { attributionControl: false }),
+    Map = require('./map'),
+    map = new Map('map'),
     projs = new Projections(),
     repo = new Repository(projs),
-    coordDisplay = new CoordDisplay('coordinates', projs),
-    geojsonLayer = {},
-    geomLayer = L.geoJson(null, {
-      style: createStyle,
-      pointToLayer: function(feature, latlng) {
-        return L.circle(latlng, 24);
-      },
-      onEachFeature: function(f, layer) {
-        geojsonLayer[L.stamp(f)] = layer;
-        require('./feature-control')(f, layer);
-      }
-    });
-
-var config = window.config || {
-  tiles: {
-    url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-  }
-};
-
+    sidebar = new Sidebar(),
+    coordDisplay = new CoordDisplay('coordinates', projs);
 
 L.Icon.Default.imagePath = 'node_modules/leaflet/dist/images';
 
-new Sidebar(repo);
-
-repo.on('added', function(e) {
-  geomLayer.addData(e.geojson);
-  map.fitBounds(geomLayer.getBounds(), {maxZoom: 14});
+sidebar.on('featureCreated', function(e) {
+  repo.add(e.def, e.srs, e.reverse);
 });
-
+sidebar.on('featureRemoved', function(e) {
+  repo.remove(e.geojson);
+});
+repo.on('added', function(e) {
+  sidebar.addFeature(e.geojson);
+  map.add(e.geojson);
+});
 repo.on('removed', function(e) {
-  var id = L.stamp(e.geojson);
-  geomLayer.removeLayer(geojsonLayer[id]);
-  delete geomLayer[id];
+  sidebar.removeFeature(e.geojson);
+  map.remove(e.geojson);
+});
+sidebar.on('featureSelected', function(e) {
+  map.highlightFeature(e.geojson);
 });
 
 map.on('click', function(e) {
   coordDisplay.show(e.latlng);
 });
 
-L.tileLayer(config.tiles.url, {
-  attribution: config.tiles.atttribution
-}).addTo(map);
+},{"./coordinates":11,"./map":15,"./projections":16,"./repository":17,"./sidebar.js":18,"leaflet":7}],15:[function(require,module,exports){
+var L = require('leaflet'),
+    createStyle = require('./feature-style'),
+    featureControl = require('./feature-control'),
+    config = window.config || {
+      tiles: {
+        url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+      }
+    };
 
-L.control.attribution({ position: 'bottomleft' }).addTo(map);
+module.exports = L.Class.extend({
+  includes: L.Mixin.Events,
 
-geomLayer.addTo(map);
-map.setView([0, 0], 2);
+  initialize: function(id) {
+    var _this = this;
 
+    this.map = L.map(id, { attributionControl: false });
+    this.geojsonLayer = {};
+    this.geomLayer = L.geoJson(null, {
+      style: createStyle,
+      pointToLayer: function(feature, latlng) {
+        return L.circle(latlng, 24);
+      },
+      onEachFeature: function(f, layer) {
+        _this.geojsonLayer[L.stamp(f)] = layer;
+        featureControl(f, layer);
+      }
+    });
 
-},{"./coordinates":11,"./feature-control":12,"./feature-style":13,"./projections":15,"./repository":16,"./sidebar.js":17,"leaflet":7}],15:[function(require,module,exports){
+    L.tileLayer(config.tiles.url, {
+      attribution: config.tiles.atttribution
+    }).addTo(this.map);
+
+    L.control.attribution({ position: 'bottomleft' }).addTo(this.map);
+
+    this.geomLayer.addTo(this.map);
+    this.map.setView([0, 0], 2);
+  },
+
+  add: function(geojson) {
+    this.geomLayer.addData(geojson);
+    this.map.fitBounds(this.geomLayer.getBounds(), {maxZoom: 14});
+
+    this.fire('added', {
+      geojson: geojson,
+      layer: this.geojsonLayer[L.stamp(geojson)]
+    });
+  },
+
+  remove: function(geojson) {
+    var id = L.stamp(geojson);
+    this.geomLayer.removeLayer(this.geojsonLayer[id]);
+    delete this.geomLayer[id];
+  },
+
+  highlightFeature: function(geojson) {
+    var layer = this.geojsonLayer[L.stamp(geojson)];
+    this.map.fitBounds(layer.getBounds(), {maxZoom: 15});
+  }
+});
+
+},{"./feature-control":12,"./feature-style":13,"leaflet":7}],16:[function(require,module,exports){
 var L = require('leaflet'),
     proj4 = require('proj4');
 
@@ -11355,7 +11394,7 @@ module.exports = L.Class.extend({
     cb.call(context || cb, name, p);
   }
 });
-},{"leaflet":7,"proj4":8}],16:[function(require,module,exports){
+},{"leaflet":7,"proj4":8}],17:[function(require,module,exports){
 var L = require('leaflet'),
     reproject = require('reproject'),
     wktParser = require('wellknown'),
@@ -11489,16 +11528,17 @@ module.exports = L.Class.extend({
     }];
   }
 });
-},{"geojsonhint":4,"leaflet":7,"reproject":9,"wellknown":10}],17:[function(require,module,exports){
+},{"geojsonhint":4,"leaflet":7,"reproject":9,"wellknown":10}],18:[function(require,module,exports){
 var L = require('leaflet'),
     geocoder;
 
-require('leaflet-control-geocoder')
+require('leaflet-control-geocoder');
 geocoder = L.Control.Geocoder.nominatim();
 
 module.exports = L.Class.extend({
-  initialize: function(repo) {
-    this._repo = repo;
+  includes: L.Mixin.Events,
+
+  initialize: function() {
     this._geojsonItems = {};
     this._setupEvents();
   },
@@ -11507,8 +11547,6 @@ module.exports = L.Class.extend({
     var addBtn = L.DomUtil.get('btn-add');
 
     L.DomEvent.addListener(addBtn, 'click', this._addGeometry, this);
-    this._repo.on('added', this._onItemAdded, this);
-    this._repo.on('removed', this._onItemRemoved, this);
   },
 
   _addGeometry: function() {
@@ -11518,7 +11556,11 @@ module.exports = L.Class.extend({
         def = defCtl.value,
         srs = srsCtl.value;
     try {
-      this._repo.add(def, srs, swapCtl.checked);
+      this.fire('featureCreated', {
+        def: def,
+        srs: srs,
+        reverse: swapCtl.checked
+      });
       defCtl.value = '';
       L.DomUtil.addClass(L.DomUtil.get('error-list'), 'hidden');
     } catch (e) {
@@ -11542,22 +11584,26 @@ module.exports = L.Class.extend({
     L.DomUtil.removeClass(el, 'hidden');
   },
 
-  _onItemAdded: function(e) {
+  addFeature: function(geojson) {
     var item = L.DomUtil.create('li', '', L.DomUtil.get('items')),
         delBtn;
-    item.appendChild(this._getItemDescription(e.geojson));
+    item.appendChild(this._getItemDescription(geojson));
     delBtn = L.DomUtil.create('button', 'delete-btn');
     delBtn.type = 'button';
     delBtn.innerHTML = '\u2212';
-    L.DomEvent.addListener(delBtn, 'click', function() {
-      this._repo.remove(e.geojson);
+    L.DomEvent.addListener(delBtn, 'click', function(e) {
+      this.fire('featureRemoved', {geojson: geojson});
+      L.DomEvent.stopPropagation(e);
+    }, this);
+    L.DomEvent.addListener(item, 'click', function() {
+      this.fire('featureSelected', {geojson: geojson});
     }, this);
     item.insertBefore(delBtn, item.children[0]);
-    this._geojsonItems[L.stamp(e.geojson)] = item;
+    this._geojsonItems[L.stamp(geojson)] = item;
   },
 
-  _onItemRemoved: function(e) {
-    var id = L.stamp(e.geojson);
+  removeFeature: function(geojson) {
+    var id = L.stamp(geojson);
     L.DomUtil.get('items').removeChild(this._geojsonItems[id]);
     delete this._geojsonItems[id];
   },
