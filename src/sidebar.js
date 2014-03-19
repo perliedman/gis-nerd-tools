@@ -60,8 +60,9 @@ module.exports = L.Class.extend({
     delBtn = L.DomUtil.create('button', 'delete-btn');
     delBtn.type = 'button';
     delBtn.innerHTML = '\u2212';
-    L.DomEvent.addListener(delBtn, 'click', function() {
+    L.DomEvent.addListener(delBtn, 'click', function(e) {
       this.fire('featureRemoved', {geojson: geojson});
+      L.DomEvent.stopPropagation(e);
     }, this);
     L.DomEvent.addListener(item, 'click', function() {
       this.fire('featureSelected', {geojson: geojson});

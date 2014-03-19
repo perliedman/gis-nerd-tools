@@ -125,10 +125,17 @@ body {
 .items li {
     border-top: 1px solid #888;
     padding-left: 4px;
+    cursor: pointer;
+    transition: background-color 0.25s linear;
+}
+
+.items li:hover {
+    background-color: #f4f4f4;
 }
 
 .delete-btn {
     float: right;
+    cursor: pointer;
 }
 
 .row {
