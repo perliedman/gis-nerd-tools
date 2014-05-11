@@ -1,10 +1,8 @@
 var L = require('leaflet'),
     proj4 = require('proj4');
 
-if (!window.Proj4js) {
-  window.Proj4js = {
-    defs: {}
-  };
+if (!window.proj4) {
+  window.proj4 = proj4
 }
 
 module.exports = L.Class.extend({
@@ -34,9 +32,11 @@ module.exports = L.Class.extend({
     proj = this.projections[name];
 
     if (!proj) {
-      if (window.Proj4js.defs[name]) {
+      try {
+        proj4.Proj(name);
+        // Known, since no exception
         this._store(name, cb, context);
-      } else {
+      } catch (e) {
         this._fetch(authority, code, cb, context);
       }
     } else {
@@ -55,9 +55,10 @@ module.exports = L.Class.extend({
   _poll: function(authority, code, cb, context) {
     var _this = this,
         name = authority + ':' + code;
-    if (window.Proj4js.defs[name]) {
+    try {
+      proj4.Proj(name);
       this._store(name, cb, context);
-    } else {
+    } catch (e) {
       setTimeout(function() {
         _this._poll(authority, code, cb, context);
       }, 100);
@@ -65,7 +66,7 @@ module.exports = L.Class.extend({
   },
 
   _store: function(name, cb, context) {
-    var p = proj4.Proj(window.Proj4js.defs[name]);
+    var p = proj4.Proj(name);
     this.projections[name] = p;
     cb.call(context || cb, name, p);
   }
