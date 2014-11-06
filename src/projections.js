@@ -1,5 +1,6 @@
 var L = require('leaflet'),
-    proj4 = require('proj4');
+    proj4 = require('proj4'),
+    codePattern = new RegExp('([0-9]+)(-)?([0-9]*)');
 
 if (!window.proj4) {
   window.proj4 = proj4
@@ -16,17 +17,25 @@ module.exports = L.Class.extend({
     var parts = name.split(':'),
         authority,
         code,
+        transformation,
         proj;
 
     if (parts.length === 2) {
       authority = parts[0].toUpperCase();
-      code = parts[1];
+      codeParts = codePattern.exec(parts[1]);
     } else if (parts.length === 1) {
       authority = 'EPSG';
-      code = parts[0];
+      codeParts = codePattern.exec(parts[0]);
     } else {
       throw 'Unable to parse SRS name';
     }
+
+    if (!codeParts || !codeParts[1]) {
+      throw 'Unable to parse SRS name';
+    }
+
+    code = codeParts[1];
+    transformation = codeParts[3];
 
     name = authority + ':' + code;
     proj = this.projections[name];
@@ -37,18 +46,20 @@ module.exports = L.Class.extend({
         // Known, since no exception
         this._store(name, cb, context);
       } catch (e) {
-        this._fetch(authority, code, cb, context);
+        this._fetch(authority, code, transformation, cb, context);
       }
     } else {
       cb.call(context || cb, name, proj);
     }
   },
 
-  _fetch: function(authority, code, cb, context) {
+  _fetch: function(authority, code, transformation, cb, context) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = 'http://epsg.io/' + code + '.js';
+    script.src = 'http://epsg.io/' + code + (transformation ? '-' + transformation : '') + '.js';
     document.getElementsByTagName('head')[0].appendChild(script);
+    // Transformation is not part of the name returned by epsg.io, so
+    // the polling doesn't care.
     this._poll(authority, code, cb, context);
   },
 
