@@ -3814,12 +3814,12 @@ L.Map = L.Class.extend({
 		var loading = !this._loaded;
 		this._loaded = true;
 
+		this.fire('viewreset', {hard: !preserveMapOffset});
+
 		if (loading) {
 			this.fire('load');
 			this.eachLayer(this._layerAdd, this);
 		}
-
-		this.fire('viewreset', {hard: !preserveMapOffset});
 
 		this.fire('move');
 
@@ -6793,7 +6793,8 @@ L.Path = (L.Path.SVG && !window.L_PREFER_CANVAS) || !L.Browser.canvas ? L.Path :
 		}
 
 		this._requestUpdate();
-
+		
+		this.fire('remove');
 		this._map = null;
 	},
 
@@ -8315,12 +8316,12 @@ L.DomEvent = {
 		var timeStamp = (e.timeStamp || e.originalEvent.timeStamp),
 			elapsed = L.DomEvent._lastClick && (timeStamp - L.DomEvent._lastClick);
 
-		// are they closer together than 1000ms yet more than 100ms?
+		// are they closer together than 500ms yet more than 100ms?
 		// Android typically triggers them ~300ms apart while multiple listeners
 		// on the same event should be triggered far faster;
 		// or check if click is simulated on the element, and if it is, reject any non-simulated events
 
-		if ((elapsed && elapsed > 100 && elapsed < 1000) || (e.target._simulatedClick && !e._simulated)) {
+		if ((elapsed && elapsed > 100 && elapsed < 500) || (e.target._simulatedClick && !e._simulated)) {
 			L.DomEvent.stop(e);
 			return;
 		}
@@ -8418,6 +8419,7 @@ L.Draggable = L.Class.extend({
 		    offset = newPoint.subtract(this._startPoint);
 
 		if (!offset.x && !offset.y) { return; }
+		if (L.Browser.touch && Math.abs(offset.x) + Math.abs(offset.y) < 3) { return; }
 
 		L.DomEvent.preventDefault(e);
 
@@ -8428,7 +8430,8 @@ L.Draggable = L.Class.extend({
 			this._startPos = L.DomUtil.getPosition(this._element).subtract(offset);
 
 			L.DomUtil.addClass(document.body, 'leaflet-dragging');
-			L.DomUtil.addClass((e.target || e.srcElement), 'leaflet-drag-target');
+			this._lastTarget = e.target || e.srcElement;
+			L.DomUtil.addClass(this._lastTarget, 'leaflet-drag-target');
 		}
 
 		this._newPos = this._startPos.add(offset);
@@ -8444,9 +8447,13 @@ L.Draggable = L.Class.extend({
 		this.fire('drag');
 	},
 
-	_onUp: function (e) {
+	_onUp: function () {
 		L.DomUtil.removeClass(document.body, 'leaflet-dragging');
-		L.DomUtil.removeClass((e.target || e.srcElement), 'leaflet-drag-target');
+
+		if (this._lastTarget) {
+			L.DomUtil.removeClass(this._lastTarget, 'leaflet-drag-target');
+			this._lastTarget = null;
+		}
 
 		for (var i in L.Draggable.MOVE) {
 			L.DomEvent
@@ -9101,7 +9108,7 @@ L.Map.TouchZoom = L.Handler.extend({
 		    center = map.layerPointToLatLng(origin),
 		    zoom = map.getScaleZoom(this._scale);
 
-		map._animateZoom(center, zoom, this._startCenter, this._scale, this._delta);
+		map._animateZoom(center, zoom, this._startCenter, this._scale, this._delta, false, true);
 	},
 
 	_onTouchEnd: function () {
@@ -10086,8 +10093,8 @@ L.Control.Layers = L.Control.extend({
 
 	onRemove: function (map) {
 		map
-		    .off('layeradd', this._onLayerChange)
-		    .off('layerremove', this._onLayerChange);
+		    .off('layeradd', this._onLayerChange, this)
+		    .off('layerremove', this._onLayerChange, this);
 	},
 
 	addBaseLayer: function (layer, name) {
@@ -10628,9 +10635,11 @@ L.Map.include(!L.DomUtil.TRANSITION ? {} : {
 		return true;
 	},
 
-	_animateZoom: function (center, zoom, origin, scale, delta, backwards) {
+	_animateZoom: function (center, zoom, origin, scale, delta, backwards, forTouchZoom) {
 
-		this._animatingZoom = true;
+		if (!forTouchZoom) {
+			this._animatingZoom = true;
+		}
 
 		// put transform transition on all layers with leaflet-zoom-animated class
 		L.DomUtil.addClass(this._mapPane, 'leaflet-zoom-anim');
@@ -10644,14 +10653,16 @@ L.Map.include(!L.DomUtil.TRANSITION ? {} : {
 			L.Draggable._disabled = true;
 		}
 
-		this.fire('zoomanim', {
-			center: center,
-			zoom: zoom,
-			origin: origin,
-			scale: scale,
-			delta: delta,
-			backwards: backwards
-		});
+		L.Util.requestAnimFrame(function () {
+			this.fire('zoomanim', {
+				center: center,
+				zoom: zoom,
+				origin: origin,
+				scale: scale,
+				delta: delta,
+				backwards: backwards
+			});
+		}, this);
 	},
 
 	_onZoomTransitionEnd: function () {
@@ -11323,7 +11334,8 @@ module.exports = L.Class.extend({
 
 },{"./feature-control":12,"./feature-style":13,"leaflet":7}],16:[function(require,module,exports){
 var L = require('leaflet'),
-    proj4 = require('proj4');
+    proj4 = require('proj4'),
+    codePattern = new RegExp('([0-9]+)(-)?([0-9]*)');
 
 if (!window.proj4) {
   window.proj4 = proj4
@@ -11340,17 +11352,25 @@ module.exports = L.Class.extend({
     var parts = name.split(':'),
         authority,
         code,
+        transformation,
         proj;
 
     if (parts.length === 2) {
       authority = parts[0].toUpperCase();
-      code = parts[1];
+      codeParts = codePattern.exec(parts[1]);
     } else if (parts.length === 1) {
       authority = 'EPSG';
-      code = parts[0];
+      codeParts = codePattern.exec(parts[0]);
     } else {
       throw 'Unable to parse SRS name';
     }
+
+    if (!codeParts || !codeParts[1]) {
+      throw 'Unable to parse SRS name';
+    }
+
+    code = codeParts[1];
+    transformation = codeParts[3];
 
     name = authority + ':' + code;
     proj = this.projections[name];
@@ -11361,18 +11381,20 @@ module.exports = L.Class.extend({
         // Known, since no exception
         this._store(name, cb, context);
       } catch (e) {
-        this._fetch(authority, code, cb, context);
+        this._fetch(authority, code, transformation, cb, context);
       }
     } else {
       cb.call(context || cb, name, proj);
     }
   },
 
-  _fetch: function(authority, code, cb, context) {
+  _fetch: function(authority, code, transformation, cb, context) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
-    script.src = 'http://epsg.io/' + code + '.js';
+    script.src = 'http://epsg.io/' + code + (transformation ? '-' + transformation : '') + '.js';
     document.getElementsByTagName('head')[0].appendChild(script);
+    // Transformation is not part of the name returned by epsg.io, so
+    // the polling doesn't care.
     this._poll(authority, code, cb, context);
   },
 
@@ -11407,31 +11429,36 @@ function parseRawCoords(def) {
       replace(/[,;:\/]/g, ' ').
       split(' ').
       filter(function(s) { return s !== ''; }),
-      c = parts.map(function(v) { return parseFloat(v); });
+      c = parts.map(function(v) { return parseFloat(v); }),
+      partsAreNumbers = c.reduce(function(areNumbers, x) {
+        return areNumbers && !isNaN(x) && x !== undefined && x !== null;
+      }, true);
 
-  if (parts.length === 4) {
-    return {
-      type: 'Polygon',
-      coordinates: [[
-        [c[0], c[1]],
-        [c[2], c[1]],
-        [c[2], c[3]],
-        [c[0], c[3]]
-      ]]
-    };
-  } else if (parts.length >= 2) {
-    return (function(cs) {
-      var r = {
+  if (partsAreNumbers) {
+    if (parts.length === 4) {
+      return {
+        type: 'Polygon',
+        coordinates: [[
+          [c[0], c[1]],
+          [c[2], c[1]],
+          [c[2], c[3]],
+          [c[0], c[3]]
+        ]]
+      };
+    } else if (parts.length >= 2) {
+      return (function(cs) {
+        var r = {
             type: 'MultiPoint',
             coordinates: []
           },
           i;
-      for (i = 0; i < cs.length; i += 2) {
-        r.coordinates.push([c[i], c[i + 1]]);
-      }
+        for (i = 0; i < cs.length - 1; i += 2) {
+          r.coordinates.push([c[i], c[i + 1]]);
+        }
 
-      return r;
-    })(parts);
+        return r;
+      })(parts);
+    }
   }
 }
 
@@ -11515,7 +11542,15 @@ module.exports = L.Class.extend({
 
     result = wktParser(def);
     if (result) {
-      return result;
+      errors = geojsonhint.hint(JSON.stringify(result));
+      if (!errors || errors.length === 0) {
+        return result;
+      } else {
+        throw [{
+          message: 'This looks like WKT, but the parsed result was invalid. Check the WKT syntax.',
+          line: 1
+        }];
+      }
     }
 
     result = parseRawCoords(def);
