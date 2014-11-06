@@ -9,31 +9,36 @@ function parseRawCoords(def) {
       replace(/[,;:\/]/g, ' ').
       split(' ').
       filter(function(s) { return s !== ''; }),
-      c = parts.map(function(v) { return parseFloat(v); });
+      c = parts.map(function(v) { return parseFloat(v); }),
+      partsAreNumbers = c.reduce(function(areNumbers, x) {
+        return areNumbers && !isNaN(x) && x !== undefined && x !== null;
+      }, true);
 
-  if (parts.length === 4) {
-    return {
-      type: 'Polygon',
-      coordinates: [[
-        [c[0], c[1]],
-        [c[2], c[1]],
-        [c[2], c[3]],
-        [c[0], c[3]]
-      ]]
-    };
-  } else if (parts.length >= 2) {
-    return (function(cs) {
-      var r = {
+  if (partsAreNumbers) {
+    if (parts.length === 4) {
+      return {
+        type: 'Polygon',
+        coordinates: [[
+          [c[0], c[1]],
+          [c[2], c[1]],
+          [c[2], c[3]],
+          [c[0], c[3]]
+        ]]
+      };
+    } else if (parts.length >= 2) {
+      return (function(cs) {
+        var r = {
             type: 'MultiPoint',
             coordinates: []
           },
           i;
-      for (i = 0; i < cs.length; i += 2) {
-        r.coordinates.push([c[i], c[i + 1]]);
-      }
+        for (i = 0; i < cs.length - 1; i += 2) {
+          r.coordinates.push([c[i], c[i + 1]]);
+        }
 
-      return r;
-    })(parts);
+        return r;
+      })(parts);
+    }
   }
 }
 
@@ -117,7 +122,15 @@ module.exports = L.Class.extend({
 
     result = wktParser(def);
     if (result) {
-      return result;
+      errors = geojsonhint.hint(JSON.stringify(result));
+      if (!errors || errors.length === 0) {
+        return result;
+      } else {
+        throw [{
+          message: 'This looks like WKT, but the parsed result was invalid. Check the WKT syntax.',
+          line: 1
+        }];
+      }
     }
 
     result = parseRawCoords(def);
