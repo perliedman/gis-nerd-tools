@@ -1717,7 +1717,7 @@ if (typeof module !== 'undefined' && require.main === module) {
 var oldL = window.L,
     L = {};
 
-L.version = '0.7.2';
+L.version = '0.7.5';
 
 // define Leaflet for Node module pattern loaders, including Browserify
 if (typeof module === 'object' && typeof module.exports === 'object') {
@@ -2229,8 +2229,7 @@ L.Mixin.Events.fire = L.Mixin.Events.fireEvent;
 		gecko = ua.indexOf('gecko') !== -1,
 
 	    mobile = typeof orientation !== undefined + '',
-	    msPointer = window.navigator && window.navigator.msPointerEnabled &&
-	              window.navigator.msMaxTouchPoints && !window.PointerEvent,
+	    msPointer = !window.PointerEvent && window.MSPointerEvent,
 		pointer = (window.PointerEvent && window.navigator.pointerEnabled && window.navigator.maxTouchPoints) ||
 				  msPointer,
 	    retina = ('devicePixelRatio' in window && window.devicePixelRatio > 1) ||
@@ -2244,38 +2243,8 @@ L.Mixin.Events.fire = L.Mixin.Events.fireEvent;
 	    opera3d = 'OTransition' in doc.style,
 	    any3d = !window.L_DISABLE_3D && (ie3d || webkit3d || gecko3d || opera3d) && !phantomjs;
 
-
-	// PhantomJS has 'ontouchstart' in document.documentElement, but doesn't actually support touch.
-	// https://github.com/Leaflet/Leaflet/pull/1434#issuecomment-13843151
-
-	var touch = !window.L_NO_TOUCH && !phantomjs && (function () {
-
-		var startName = 'ontouchstart';
-
-		// IE10+ (We simulate these into touch* events in L.DomEvent and L.DomEvent.Pointer) or WebKit, etc.
-		if (pointer || (startName in doc)) {
-			return true;
-		}
-
-		// Firefox/Gecko
-		var div = document.createElement('div'),
-		    supported = false;
-
-		if (!div.setAttribute) {
-			return false;
-		}
-		div.setAttribute(startName, 'return;');
-
-		if (typeof div[startName] === 'function') {
-			supported = true;
-		}
-
-		div.removeAttribute(startName);
-		div = null;
-
-		return supported;
-	}());
-
+	var touch = !window.L_NO_TOUCH && !phantomjs && (pointer || 'ontouchstart' in window ||
+		(window.DocumentTouch && document instanceof window.DocumentTouch));
 
 	L.Browser = {
 		ie: ie,
@@ -3342,14 +3311,15 @@ L.Map = L.Class.extend({
 		var paddingTL = L.point(options.paddingTopLeft || options.padding || [0, 0]),
 		    paddingBR = L.point(options.paddingBottomRight || options.padding || [0, 0]),
 
-		    zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR)),
-		    paddingOffset = paddingBR.subtract(paddingTL).divideBy(2),
+		    zoom = this.getBoundsZoom(bounds, false, paddingTL.add(paddingBR));
+
+		zoom = (options.maxZoom) ? Math.min(options.maxZoom, zoom) : zoom;
+
+		var paddingOffset = paddingBR.subtract(paddingTL).divideBy(2),
 
 		    swPoint = this.project(bounds.getSouthWest(), zoom),
 		    nePoint = this.project(bounds.getNorthEast(), zoom),
 		    center = this.unproject(swPoint.add(nePoint).divideBy(2).add(paddingOffset), zoom);
-
-		zoom = options && options.maxZoom ? Math.min(options.maxZoom, zoom) : zoom;
 
 		return this.setView(center, zoom, options);
 	},
@@ -4492,7 +4462,7 @@ L.TileLayer = L.Class.extend({
 		}
 
 		if (options.bounds) {
-			var tileSize = options.tileSize,
+			var tileSize = this._getTileSize(),
 			    nwPoint = tilePoint.multiplyBy(tileSize),
 			    sePoint = nwPoint.add([tileSize, tileSize]),
 			    nw = this._map.unproject(nwPoint),
@@ -5277,10 +5247,8 @@ L.Marker = L.Class.extend({
 
 	update: function () {
 		if (this._icon) {
-			var pos = this._map.latLngToLayerPoint(this._latlng).round();
-			this._setPos(pos);
+			this._setPos(this._map.latLngToLayerPoint(this._latlng).round());
 		}
-
 		return this;
 	},
 
@@ -5303,7 +5271,7 @@ L.Marker = L.Class.extend({
 			if (options.title) {
 				icon.title = options.title;
 			}
-			
+
 			if (options.alt) {
 				icon.alt = options.alt;
 			}
@@ -5938,6 +5906,7 @@ L.Marker.include({
 		if (content instanceof L.Popup) {
 			L.setOptions(content, options);
 			this._popup = content;
+			content._source = this;
 		} else {
 			this._popup = new L.Popup(options, this)
 				.setContent(content);
@@ -6824,6 +6793,13 @@ L.Path = (L.Path.SVG && !window.L_PREFER_CANVAS) || !L.Browser.canvas ? L.Path :
 		if (options.fill) {
 			this._ctx.fillStyle = options.fillColor || options.color;
 		}
+
+		if (options.lineCap) {
+			this._ctx.lineCap = options.lineCap;
+		}
+		if (options.lineJoin) {
+			this._ctx.lineJoin = options.lineJoin;
+		}
 	},
 
 	_drawPath: function () {
@@ -6861,7 +6837,7 @@ L.Path = (L.Path.SVG && !window.L_PREFER_CANVAS) || !L.Browser.canvas ? L.Path :
 
 		if (options.fill) {
 			ctx.globalAlpha = options.fillOpacity;
-			ctx.fill();
+			ctx.fill(options.fillRule || 'evenodd');
 		}
 
 		if (options.stroke) {
@@ -6876,15 +6852,14 @@ L.Path = (L.Path.SVG && !window.L_PREFER_CANVAS) || !L.Browser.canvas ? L.Path :
 
 	_initEvents: function () {
 		if (this.options.clickable) {
-			// TODO dblclick
 			this._map.on('mousemove', this._onMouseMove, this);
-			this._map.on('click', this._onClick, this);
+			this._map.on('click dblclick contextmenu', this._fireMouseEvent, this);
 		}
 	},
 
-	_onClick: function (e) {
+	_fireMouseEvent: function (e) {
 		if (this._containsPoint(e.layerPoint)) {
-			this.fire('click', e);
+			this.fire(e.type, e);
 		}
 	},
 
@@ -10662,10 +10637,13 @@ L.Map.include(!L.DomUtil.TRANSITION ? {} : {
 				delta: delta,
 				backwards: backwards
 			});
+			// horrible hack to work around a Chrome bug https://github.com/Leaflet/Leaflet/issues/3689
+			setTimeout(L.bind(this._onZoomTransitionEnd, this), 250);
 		}, this);
 	},
 
 	_onZoomTransitionEnd: function () {
+		if (!this._animatingZoom) { return; }
 
 		this._animatingZoom = false;
 
@@ -10710,6 +10688,11 @@ L.TileLayer.include({
 
 		// force reflow
 		L.Util.falseFn(bg.offsetWidth);
+
+		var zoom = this._map.getZoom();
+		if (zoom > this.options.maxZoom || zoom < this.options.minZoom) {
+			this._clearBgBuffer();
+		}
 
 		this._animating = false;
 	},
@@ -11006,13 +10989,16 @@ module.exports = {
 },{"proj4":8}],10:[function(require,module,exports){
 module.exports = parse;
 
-/*
+ /*
  * Parse WKT and return GeoJSON.
  *
  * @param {string} _ A WKT geometry
  * @return {?Object} A GeoJSON geometry object
  */
 function parse(_) {
+    var parts = _.split(";"),
+        _ = parts.pop(),
+        srid = (parts.shift() || "").split("=").pop();
 
     var i = 0;
 
@@ -11025,28 +11011,53 @@ function parse(_) {
         }
     }
 
+    function crs(obj) {
+        if (obj && srid.match(/\d+/)) {
+            obj.crs = {
+                type: 'name',
+                properties: {
+                    name: 'urn:ogc:def:crs:EPSG::' + srid
+                }
+            };
+        }
+
+        return obj;
+    }
+
     function white() { $(/^\s*/); }
 
     function multicoords() {
         white();
-        var depth = 0, rings = [],
+        var depth = 0, rings = [], stack = [rings],
             pointer = rings, elem;
+
         while (elem =
             $(/^(\()/) ||
             $(/^(\))/) ||
             $(/^(\,)/) ||
-            coords()) {
+            $(/^[-+]?([0-9]*\.[0-9]+|[0-9]+)/)) {
             if (elem == '(') {
+                stack.push(pointer);
+                pointer = [];
+                stack[stack.length - 1].push(pointer);
                 depth++;
             } else if (elem == ')') {
+                pointer = stack.pop();
+                // the stack was empty, input was malformed
+                if (!pointer) return;
                 depth--;
-                if (depth == 0) break;
-            } else if (elem && Array.isArray(elem) && elem.length) {
-                pointer.push(elem);
+                if (depth === 0) break;
             } else if (elem === ',') {
+                pointer = [];
+                stack[stack.length - 1].push(pointer);
+            } else if (!isNaN(parseFloat(elem))) {
+                pointer.push(parseFloat(elem));
+            } else {
+                return null;
             }
             white();
         }
+
         if (depth !== 0) return null;
         return rings;
     }
@@ -11074,6 +11085,7 @@ function parse(_) {
         white();
         if (!$(/^(\()/)) return null;
         var c = coords();
+        if (!c) return null;
         white();
         if (!$(/^(\))/)) return null;
         return {
@@ -11086,10 +11098,11 @@ function parse(_) {
         if (!$(/^(multipoint)/i)) return null;
         white();
         var c = multicoords();
+        if (!c) return null;
         white();
         return {
             type: 'MultiPoint',
-            coordinates: c[0]
+            coordinates: c
         };
     }
 
@@ -11097,6 +11110,7 @@ function parse(_) {
         if (!$(/^(multilinestring)/i)) return null;
         white();
         var c = multicoords();
+        if (!c) return null;
         white();
         return {
             type: 'MultiLineString',
@@ -11109,6 +11123,7 @@ function parse(_) {
         white();
         if (!$(/^(\()/)) return null;
         var c = coords();
+        if (!c) return null;
         if (!$(/^(\))/)) return null;
         return {
             type: 'LineString',
@@ -11165,7 +11180,7 @@ function parse(_) {
             geometrycollection();
     }
 
-    return root();
+    return crs(root());
 }
 
 },{}],11:[function(require,module,exports){
@@ -11308,6 +11323,7 @@ module.exports = L.Class.extend({
 
     this.geomLayer.addTo(this.map);
     this.map.setView([0, 0], 2);
+    this.map.on('click', L.bind(function(e) { this.fire('click', e); }, this));
   },
 
   add: function(geojson) {
