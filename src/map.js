@@ -35,6 +35,7 @@ module.exports = L.Class.extend({
 
     this.geomLayer.addTo(this.map);
     this.map.setView([0, 0], 2);
+    this.map.on('click', L.bind(function(e) { this.fire('click', e); }, this));
   },
 
   add: function(geojson) {
