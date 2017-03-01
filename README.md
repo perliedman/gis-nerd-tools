@@ -1,6 +1,8 @@
 GIS Nerd Tools
 ==============
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/perliedman/gis-nerd-tools.svg)](https://greenkeeper.io/)
+
 Because you use GIS but everything else is too damn complicated.
 
 Features:
